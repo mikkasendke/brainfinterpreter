@@ -76,13 +76,13 @@ impl Brain {
     fn increment(&mut self) {
         self.memory.set(
             self.address_pointer,
-            self.memory.get(self.address_pointer) + 1,
+            self.memory.get(self.address_pointer).wrapping_add(1),
         );
     }
     fn decrement(&mut self) {
         self.memory.set(
             self.address_pointer,
-            self.memory.get(self.address_pointer) - 1,
+            self.memory.get(self.address_pointer).wrapping_sub(1),
         );
     }
     fn output(&mut self) {
@@ -102,14 +102,14 @@ impl Brain {
         if self.memory.get(self.address_pointer) == 0 {
             self.program_counter = self
                 .find_matching_closing()
-                .expect("No matching closing bracket found");
+                .expect(format!("No matching closing bracket found, at pc: {}", self.program_counter).as_str());
         }
     }
     fn loop_end(&mut self) {
         if self.memory.get(self.address_pointer) != 0 {
             self.program_counter = self
                 .find_matching_opening()
-                .expect("No matching opening bracket found");
+                .expect(format!("No matching opening bracket found, at pc: {}", self.program_counter).as_str());
         }
     }
 
@@ -124,10 +124,10 @@ impl Brain {
             match token {
                 Token::BracketOpen => open_brackets += 1,
                 Token::BracketClose => {
+                    open_brackets -= 1;
                     if open_brackets == 0 {
                         return Some(index);
                     }
-                    open_brackets -= 1;
                 }
                 _ => {}
             }
@@ -135,7 +135,7 @@ impl Brain {
         return None;
     }
     fn find_matching_opening(&self) -> Option<usize> {
-        let mut close_brackets = 0;
+        let mut close_brackets = 1;
         for (index, token) in self
             .instructions
             .iter()
@@ -145,10 +145,10 @@ impl Brain {
         {
             match token {
                 Token::BracketOpen => {
+                    close_brackets -= 1;
                     if close_brackets == 0 {
                         return Some(index);
                     }
-                    close_brackets -= 1;
                 }
                 Token::BracketClose => close_brackets += 1,
                 _ => {}
