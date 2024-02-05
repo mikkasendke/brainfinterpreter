@@ -3,15 +3,16 @@ use std::io::Read;
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
     let file_path = args.get(1).expect("No filename provided");
+    let cell_count = args
+        .get(2)
+        .expect("No cell count provided")
+        .parse::<usize>()
+        .expect("Invalid cell count");
 
     let text = std::fs::read_to_string(file_path).expect("File not found");
     let lexer = Tokenizer::new(text);
 
     let tokens: Vec<Token> = lexer.tokenize();
-    let cell_count = tokens
-        .iter()
-        .filter(|token| matches!(token, Token::Plus))
-        .count();
 
     let memory = Memory::new(cell_count);
     let mut brain = Brain::new(tokens, memory);
@@ -100,16 +101,24 @@ impl Brain {
     }
     fn loop_start(&mut self) {
         if self.memory.get(self.address_pointer) == 0 {
-            self.program_counter = self
-                .find_matching_closing()
-                .expect(format!("No matching closing bracket found, at pc: {}", self.program_counter).as_str());
+            self.program_counter = self.find_matching_closing().expect(
+                format!(
+                    "No matching closing bracket found, at pc: {}",
+                    self.program_counter
+                )
+                .as_str(),
+            );
         }
     }
     fn loop_end(&mut self) {
         if self.memory.get(self.address_pointer) != 0 {
-            self.program_counter = self
-                .find_matching_opening()
-                .expect(format!("No matching opening bracket found, at pc: {}", self.program_counter).as_str());
+            self.program_counter = self.find_matching_opening().expect(
+                format!(
+                    "No matching opening bracket found, at pc: {}",
+                    self.program_counter
+                )
+                .as_str(),
+            );
         }
     }
 
